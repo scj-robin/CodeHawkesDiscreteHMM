@@ -1,13 +1,12 @@
----
-title: "Fitting a discrete-time Hawkes HMM to a sequence of bat calls"
-author: A. Bonnet, S. Robin
-date: jul 2025
-output: html_document
----
+This repo contains an R implementation of the code associated with the paper "Markov switching discrete-time Hawkes process: application to the monitoring of bats' behavior", A. Bonnet, S. Robin (2025). The data is extracted from the publicly availabe dataset provided by the Vigie-Chiro program: https://www.vigienature.fr/fr/chauves-souris
+
+
+
 
 ### Data
 
 $n = 524$ calls along one night (times have been rescaled to the (0, 1) interval).
+
 
 ```{r data, echo=FALSE}
 setwd('./')
@@ -16,18 +15,23 @@ n <- length(times)
 plot(times, 1:n, type='b', pch=20, xlab='time', ylab='count')
 cat('Number of events: n =', n, '\n')
 ```
+<img src="./plot_trajectory.png" width="500">
 
-### Libraries and fitting parameters
+```
+
+
+### Libraries and fixing parameters
 
 ```{r dims, echo=FALSE}
-library('hawkesbow')
+library('hawkesbow') 
 source('Functions.R')
 Tmax <- 1
 Q <- 3 # number of hidden states
 coef <- 2 # discretisation coefficient: N = coef * n
 N <- ceiling(coef*n)
 cat('Tmax =', Tmax, ', coef =', coef, ', N =', N, '\n')
-```
+
+
 
 ### Builds the discrete-time path
 
@@ -70,3 +74,5 @@ cat('alpha =', fit$discParms$alpha, ', beta =', fit$discParms$beta, '\n',
 plot((1:N)/N, cumsum(discPath$y), type='b', pch=20, col=fit$classif, xlab='time', ylab='count')
 abline(v=(0.5+which(diff(fit$classif)!=0))/N, lty=2, lwd=2)
 ```
+<img src="./segmented_trajectory.png" width="500">
+
