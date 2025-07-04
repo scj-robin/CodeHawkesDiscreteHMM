@@ -1,11 +1,11 @@
-This repo contains an R implementation of the code associated with the paper "Markov switching discrete-time Hawkes process: application to the monitoring of bats' behavior", A. Bonnet, S. Robin (2025). The data is extracted from the publicly availabe dataset provided by the Vigie-Chiro program: https://www.vigienature.fr/fr/chauves-souris
+This repo contains an R implementation of the code associated with the paper "Markov switching discrete-time Hawkes process: application to the monitoring of bats' behavior", A. Bonnet, S. Robin (2025).
 
-
+Hereafter is an example its use on a dataset extracted from the publicly available data provided by the Vigie-Chiro program: https://www.vigienature.fr/fr/chauves-souris
 
 
 ### Data
 
-$n = 524$ calls along one night (times have been rescaled to the (0, 1) interval).
+The dataset consists of $n = 524$ calls along one night (times have been rescaled to the (0, 1) interval). Let us plot the associated count process:
 
 
 ```{r data, echo=FALSE}
@@ -13,14 +13,18 @@ setwd('./')
 times <- read.table('batcalls.csv', header=FALSE)[, 1]
 n <- length(times)
 plot(times, 1:n, type='b', pch=20, xlab='time', ylab='count')
-cat('Number of events: n =', n, '\n')
+
 ```
+
 <img src="./plot_trajectory.png" width="500">
 
-```
 
 
-### Libraries and fixing parameters
+
+### Libraries and fixed parameters
+
+The **hawkesbow** library is required for initialization. All functions used for estimation are stored in Function.R. 
+We define the following parameters: Tmax (length of the observation window), Q (number of hidden states), coef (discretisation coefficient).
 
 ```{r dims, echo=FALSE}
 library('hawkesbow') 
@@ -29,17 +33,16 @@ Tmax <- 1
 Q <- 3 # number of hidden states
 coef <- 2 # discretisation coefficient: N = coef * n
 N <- ceiling(coef*n)
-cat('Tmax =', Tmax, ', coef =', coef, ', N =', N, '\n')
 
+```
 
+### Building the discrete-time path
 
-### Builds the discrete-time path
+We build a discrete path from the continuous path:
 
 ```{r discrete, echo=FALSE}
 contPath <- list(times=times, states=rep(1, n), hiddenPath=list(states=1, times=0))
 discPath <- MakeDiscreteHawkes1D(contPath=contPath, N=N, Tmax=Tmax)
-cat('Observed counts : \n', 
-    discPath$y[1:20], '\n')
 ```
 
 ### Initialization
@@ -52,7 +55,7 @@ if(!file.exists(initFile)){
 }else{load(initFile)}
 ```
 
-### Fit the discrete-time Hawkes HMM
+### Fitting the discrete-time Hawkes HMM
 
 ```{r fit, echo=FALSE}
 fitFile <- paste0('batcalls-fit-Q', Q, '.Rdata')
@@ -60,15 +63,11 @@ if(!file.exists(fitFile)){
   fit <- EMHMMHawkes1D(discPath=discPath, discParms=init, Q=Q)
   save(fit, file=fitFile)
 }else{load(fitFile)}
-cat('Parms : \n')
-cat('alpha =', fit$discParms$alpha, ', beta =', fit$discParms$beta, '\n', 
-    'mu =', fit$discParms$mu, '\n', 
-    'diag(pi) =', diag(fit$discParms$pi), '\n', 
-    'state frequencies =', table(fit$classif)/N, '\n', 
-    'logLik = ', fit$logL, '\n')
 ```
 
 ### Output
+
+We plot the initial path with one color for each estimated hidden state.
 
 ```{r plot, echo=FALSE}
 plot((1:N)/N, cumsum(discPath$y), type='b', pch=20, col=fit$classif, xlab='time', ylab='count')
